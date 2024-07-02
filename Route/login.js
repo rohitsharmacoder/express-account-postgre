@@ -14,7 +14,7 @@ LoginRouter.post('/', async (req, res) => {
   const { email, password } = req.body;
   try {
     const account = await Account.findOne({ where: { email } });
-    console.log({account});
+    
     if (!account) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
