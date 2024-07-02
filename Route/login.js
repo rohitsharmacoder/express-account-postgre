@@ -1,8 +1,11 @@
 const express = require("express");
 const LoginRouter = express.Router();
 
-const { Account } = require('../models/account');
 const { successHandler, errorHandler } = require('../middleware/response');
+
+const {sequelize, DataTypes} = require("../database/connection");
+const accountModel = require('../models/account');
+const Account = accountModel(sequelize, DataTypes);
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -15,7 +18,7 @@ LoginRouter.post('/', async (req, res) => {
     if (!account) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    const isMatch = password === account.password; //await bcrypt.compare(password, account.password);
+    const isMatch = await bcrypt.compare(password, account.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }

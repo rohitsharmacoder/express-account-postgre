@@ -1,7 +1,10 @@
 const express = require("express");
 const AccountRouter = express.Router();
 
-const { Account } = require('../models/account');
+const accountModel = require('../models/account');
+
+const {sequelize, DataTypes} = require("../database/connection");
+const Account = accountModel(sequelize, DataTypes);
 
 const auth = require("../middleware/auth");
 const { successHandler, errorHandler } = require('../middleware/response');

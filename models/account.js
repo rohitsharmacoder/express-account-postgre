@@ -1,31 +1,85 @@
-const accountData = [];
-let counter = 1;
+// models/account.js
+'use strict';
+const bcrypt = require('bcrypt');
+const { Model } = require('sequelize');
 
-console.log({accountData, counter});
-
-const Account = {
-  create: (data) => {
-    data['pk'] = counter++;
-    accountData.push(data);
-    console.log({accountData, counter});
-    return data;
-  },
-
-  findAndCountAll: () => {
-    return {count: accountData.length, rows: accountData};
-  },
-
-  findByPk: (pk) => {
-    const data = accountData.filter(data => data.pk === pk);
-    return data?.[0] ? {...data[0]} : null;
-  },
-
-  findOne: (payload) => {
-    console.log(payload);
-    const data = accountData.filter(data => data.email === payload.where.email);
-    console.log(data);
-    return data?.[0] ? {...data[0]} : null;
+module.exports = (sequelize, DataTypes) => {
+  class Account extends Model {
+    static associate(models) {
+    }
   }
-}
 
-module.exports = {Account}
+  Account.init({
+    first_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    last_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+    },
+    phone: {
+      type: DataTypes.STRING(16),
+    },
+    password: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    birthday: {
+      type: DataTypes.DATEONLY,
+      get() {
+        return this.getDataValue('birthday')?.toISOString().split('T')[0]; // Format as yyyy-mm-dd
+      },
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      get() {
+        const date = this.getDataValue('created_at');
+        return date ? `${date.toISOString().split('T')[0]} ${date.toTimeString().split(' ')[0]}` : null; // Format as yyyy-mm-dd hh:mm:ss
+      },
+    },
+    last_modified: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      get() {
+        const date = this.getDataValue('last_modified');
+        return date ? `${date.toISOString().split('T')[0]} ${date.toTimeString().split(' ')[0]}` : null; // Format as yyyy-mm-dd hh:mm:ss
+      },
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    }
+  }, {
+    sequelize,
+    modelName: 'Account',
+    tableName: 'accounts',
+    timestamps: false,
+    hooks: {
+      beforeCreate: async (account) => {
+        if (account.password) {
+          account.password = await bcrypt.hash(account.password, 10);
+        }
+      },
+      beforeUpdate: async (account) => {
+        if (account.password) {
+          account.password = await bcrypt.hash(account.password, 10);
+        }
+      },
+    },
+  });
+
+  return Account;
+};
